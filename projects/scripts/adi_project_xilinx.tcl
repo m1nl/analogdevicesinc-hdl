@@ -176,7 +176,7 @@ proc adi_project_create {project_name mode parameter_list device {board "not-app
   set p_board $board
 
   set use_smartconnect 1
-  if [regexp "^xc7z" $p_device] {
+  if [regexp "^xc7z01" $p_device] {
     # SmartConnect has higher resource utilization and worse timing closure on older families
     set use_smartconnect 0
   }
@@ -359,6 +359,8 @@ proc adi_project_run {project_name} {
     return
   }
 
+  set_property is_enabled false [get_files *_impl.xdc]
+
   if {$ADI_USE_OOC_SYNTHESIS == 1} {
     launch_runs -jobs $ADI_MAX_OOC_JOBS system_*_synth_1 synth_1
   } else {
@@ -378,6 +380,8 @@ proc adi_project_run {project_name} {
   }
 
   set_param board.repoPaths [get_property LOCAL_ROOT_DIR [xhub::get_xstores xilinx_board_store]]
+
+  set_property is_enabled true [get_files *_impl.xdc]
 
   launch_runs impl_1 -to_step write_bitstream
   wait_on_run impl_1
