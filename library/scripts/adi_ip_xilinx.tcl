@@ -308,6 +308,9 @@ proc adi_ip_files {ip_name ip_files} {
   foreach m_file $ip_files {
     if {[file extension $m_file] eq ".xdc"} {
       add_files -norecurse -fileset constrs_1 $m_file
+    } elseif {[file extension $m_file] eq ".sv"} {
+      add_files -norecurse -scan_for_includes -fileset $proj_fileset $m_file
+      set_property file_type SystemVerilog [get_files $m_file]
     } else {
       add_files -norecurse -scan_for_includes -fileset $proj_fileset $m_file
     }
