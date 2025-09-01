@@ -9,4 +9,8 @@ PROJECT_NAME := ebaz4205
 M_DEPS += ../../library/common/ad_iobuf.v
 M_DEPS += ../../library/common/ad_bus_mux.v
 
+LIB_DEPS += hdmi
+LIB_DEPS += hdmi_generator
+LIB_DEPS += axi_dmac
+
 include ../scripts/project-xilinx.mk

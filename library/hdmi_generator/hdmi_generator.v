@@ -1,14 +1,23 @@
-`timescale 1ns / 100ps
-
+`default_nettype none
+`timescale 1 ns / 1 ps
 module hdmi_generator(
-  input wire clk,
-  input wire aresetn,
+  (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 reset_100m RST" *)
+  (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
+  input wire reset_100m,
+  (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clk_100m CLK" *)
+  (* X_INTERFACE_PARAMETER = "ASSOCIATED_RESET reset_100m" *)
+  input wire clk_100m,
+
+  input wire [63:0] s_axis_rgb_tdata,
+  input wire s_axis_rgb_tvalid,
+  input wire s_axis_rgb_tlast,
+  output wire s_axis_rgb_tready,
 
   (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 pixel_reset RST" *)
-  (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
+  (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
   output wire pixel_reset,
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 pixel_clk CLK" *)
-  (* X_INTERFACE_PARAMETER = "ASSOCIATED_RESET pixel_reset, CLK_DOMAIN pixel_clk, FREQ_HZ 25250000, ASSOCIATED_BUSIF rgb" *)
+  (* X_INTERFACE_PARAMETER = "ASSOCIATED_RESET pixel_reset, CLK_DOMAIN pixel_clk, FREQ_HZ 25250000, ASSOCIATED_BUSIF s_axis_rgb" *)
   output wire pixel_clk,
   (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 pixel_clk_5x CLK" *)
   (* X_INTERFACE_PARAMETER = "CLK_DOMAIN pixel_clk_5x, FREQ_HZ 126250000" *)
@@ -20,7 +29,7 @@ module hdmi_generator(
   input wire [9:0] screen_width,
   input wire [9:0] screen_height,
 
-  output reg [23:0] rgb
+  output wire [23:0] rgb
 );
   wire clkfbout, clkfbout_o;
 
@@ -39,38 +48,48 @@ module hdmi_generator(
     .CLKOUT0_DIVIDE_F (40.000),
     .CLKOUT1_DIVIDE   (8)
   ) mmcm_adv_inst (
-    .CLKIN1   (clk),
-    .CLKINSEL (1'b1),
-    .CLKFBOUT (clkfbout),
-    .CLKFBIN  (clkfbout_o),
-    .CLKOUT0  (pixel_clk_i),
-    .CLKOUT1  (pixel_x5_clk_i),
-    .LOCKED   (locked),
-    .PWRDWN   (1'b0),
-    .RST      (1'b0)
+    .PWRDWN(1'b0),
+    .RST(reset_100m),
+    .CLKIN1(clk_100m),
+    .CLKINSEL(1'b1),
+    .CLKFBOUT(clkfbout),
+    .CLKFBIN(clkfbout_o),
+    .CLKOUT0(pixel_clk_i),
+    .CLKOUT1(pixel_x5_clk_i),
+    .LOCKED(locked)
   );
 
   BUFG clkfbout_bufg(
-    .O(clkfbout_o),
-    .I(clkfbout)
+    .I(clkfbout),
+    .O(clkfbout_o)
   );
 
   BUFG pixel_clk_bufg (
-    .O(pixel_clk),
-    .I(pixel_clk_i)
+    .I(pixel_clk_i),
+    .O(pixel_clk)
   );
 
   BUFG pixel_x5_clk_bufg(
-    .O(pixel_x5_clk),
-    .I(pixel_x5_clk_i)
+    .I(pixel_x5_clk_i),
+    .O(pixel_x5_clk)
   );
 
   util_reset_sync util_reset_sync_0 (
-    .out(pixel_reset),
+    .rst(reset_100m || !locked),
     .clk(pixel_clk),
-    .rst(!aresetn || !locked)
+    .out(pixel_reset)
   );
 
-  always @(posedge pixel_clk)
-    rgb <= {(cx[0] == 1'b1) ? 8'hff : 8'h00, (cx[0] == 1'b1) ? 8'h00 : 8'hff, (cy[0] == 1'b1) ? 8'hff : 8'h00};
+  hdmi_adapter hdmi_adapter_0 (
+    .areset(pixel_reset),
+    .aclk(pixel_clk),
+    .s_axis_rgb_tdata(s_axis_rgb_tdata),
+    .s_axis_rgb_tvalid(s_axis_rgb_tvalid),
+    .s_axis_rgb_tlast(s_axis_rgb_tlast),
+    .s_axis_rgb_tready(s_axis_rgb_tready),
+    .rgb(rgb),
+    .sof(cx == 0 && cy == 0)
+  );
 endmodule
+`default_nettype wire
+// vim:ts=2 sw=2 tw=120 et

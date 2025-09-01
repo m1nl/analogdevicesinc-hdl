@@ -1,4 +1,7 @@
+## ports
+
 # uart
+
 set_property IOSTANDARD LVCMOS33 [get_ports UART_0_rxd]
 set_property IOSTANDARD LVCMOS33 [get_ports UART_0_txd]
 set_property PACKAGE_PIN H16 [get_ports UART_0_rxd]
@@ -90,10 +93,10 @@ set_property PACKAGE_PIN W15 [get_ports MDIO_PHY_mdc]
 set_property PACKAGE_PIN Y14 [get_ports MDIO_PHY_mdio_io]
 set_property PACKAGE_PIN W16 [get_ports GMII_rx_dv]
 
-# ext_clk
+# ext_clk_50m
 
-set_property IOSTANDARD LVCMOS33 [get_ports ext_clk]
-set_property PACKAGE_PIN N18 [get_ports ext_clk]
+set_property IOSTANDARD LVCMOS33 [get_ports ext_clk_50m]
+set_property PACKAGE_PIN N18 [get_ports ext_clk_50m]
 
 # ddr
 
@@ -111,3 +114,31 @@ set_property IOSTANDARD SSTL15 [get_ports ddr_odt]
 set_property IOSTANDARD SSTL15_T_DCI [get_ports *ddr_dq[*]]
 set_property IOSTANDARD SSTL15_T_DCI [get_ports *ddr_dm[*]]
 set_property IOSTANDARD DIFF_SSTL15_T_DCI [get_ports *ddr_dqs*]
+
+# spi display
+
+set_property IOSTANDARD LVCMOS33 [get_ports lcd_backlight]
+set_property IOSTANDARD LVCMOS33 [get_ports lcd_dc]
+set_property IOSTANDARD LVCMOS33 [get_ports lcd_scl]
+set_property IOSTANDARD LVCMOS33 [get_ports lcd_sda]
+set_property IOSTANDARD LVCMOS33 [get_ports lcd_res]
+set_property PACKAGE_PIN T20 [get_ports lcd_backlight]
+set_property PACKAGE_PIN R18 [get_ports lcd_dc]
+set_property PACKAGE_PIN R19 [get_ports lcd_scl]
+set_property PACKAGE_PIN P20 [get_ports lcd_sda]
+set_property PACKAGE_PIN N17 [get_ports lcd_res]
+
+## clocks
+
+# ethernet PHY
+create_clock -period 40.000 -name GMII_rx_clk -waveform {0.000 20.000} [get_ports GMII_rx_clk]
+create_clock -period 40.000 -name GMII_tx_clk -waveform {0.000 20.000} [get_ports GMII_tx_clk]
+
+# ext_clk
+
+create_clock -period 20.000 -name ext_clk_50m [get_ports ext_clk_50m]
+
+# fpga_clk
+
+create_clock -name fpga_0_clk -period 10.000 [get_pins "i_system_wrapper/system_i/sys_ps7/inst/PS7_i/FCLKCLK[0]"]
+set_input_jitter fpga_0_clk 0.3

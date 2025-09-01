@@ -8,18 +8,22 @@ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:gmii_rtl:1.0 GMII
 
 create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 UART_0
 
-create_bd_port -dir I -from 9 -to 0 gpio_i
-create_bd_port -dir O -from 9 -to 0 gpio_o
-create_bd_port -dir O -from 9 -to 0 gpio_t
+create_bd_port -dir I -from 12 -to 0 gpio_i
+create_bd_port -dir O -from 12 -to 0 gpio_o
+create_bd_port -dir O -from 12 -to 0 gpio_t
 
 create_bd_port -dir O ttc0_wave0_out
+create_bd_port -dir O ttc0_wave1_out
+
+create_bd_port -dir O lcd_scl
+create_bd_port -dir O lcd_sda
 
 create_bd_port -dir O hdmi_clk
 create_bd_port -dir O hdmi_d0
 create_bd_port -dir O hdmi_d1
 create_bd_port -dir O hdmi_d2
 
-create_bd_port -dir I ext_clk
+create_bd_port -dir I ext_clk_50m
 
 # instance: sys_ps7
 
@@ -35,7 +39,7 @@ ad_ip_parameter sys_ps7 CONFIG.PCW_PACKAGE_NAME {clg400}
 ad_ip_parameter sys_ps7 CONFIG.PCW_GPIO_MIO_GPIO_ENABLE 1
 
 ad_ip_parameter sys_ps7 CONFIG.PCW_GPIO_EMIO_GPIO_ENABLE 1
-ad_ip_parameter sys_ps7 CONFIG.PCW_GPIO_EMIO_GPIO_IO 10
+ad_ip_parameter sys_ps7 CONFIG.PCW_GPIO_EMIO_GPIO_IO 13
 
 ad_ip_parameter sys_ps7 CONFIG.PCW_ENET0_PERIPHERAL_ENABLE 1
 ad_ip_parameter sys_ps7 CONFIG.PCW_ENET0_ENET0_IO {EMIO}
@@ -91,12 +95,13 @@ ad_ip_parameter sys_ps7 CONFIG.PCW_I2C0_RESET_ENABLE 0
 ad_ip_parameter sys_ps7 CONFIG.PCW_I2C1_PERIPHERAL_ENABLE 0
 ad_ip_parameter sys_ps7 CONFIG.PCW_I2C1_RESET_ENABLE 0
 
-ad_ip_parameter sys_ps7 CONFIG.PCW_SPI0_PERIPHERAL_ENABLE 0
+ad_ip_parameter sys_ps7 CONFIG.PCW_SPI0_PERIPHERAL_ENABLE 1
+ad_ip_parameter sys_ps7 CONFIG.PCW_SPI0_SPI0_IO {EMIO}
+
 ad_ip_parameter sys_ps7 CONFIG.PCW_SPI1_PERIPHERAL_ENABLE 0
 
 ad_ip_parameter sys_ps7 CONFIG.PCW_TTC0_PERIPHERAL_ENABLE 1
 ad_ip_parameter sys_ps7 CONFIG.PCW_TTC0_TTC0_IO {EMIO}
-ad_ip_parameter sys_ps7 CONFIG.PCW_TTC0_CLK0_PERIPHERAL_CLKSRC {External}
 
 ad_ip_parameter sys_ps7 CONFIG.PCW_USB_RESET_ENABLE 0
 
@@ -151,14 +156,17 @@ ad_connect gpio_t sys_ps7/GPIO_T
 ad_connect ttc0_wave0_out sys_ps7/TTC0_WAVE0_OUT
 
 ad_connect sys_cpu_clk sys_ps7/FCLK_CLK0
-ad_connect sys_cpu_clk sys_ps7/M_AXI_GP0_ACLK
-ad_connect sys_cpu_clk sys_ps7/TTC0_CLK0_IN
 
 ad_ip_instance xlconcat sys_concat_intc
 ad_ip_parameter sys_concat_intc CONFIG.NUM_PORTS 16
 
 ad_ip_instance proc_sys_reset sys_rstgen
 ad_ip_parameter sys_rstgen CONFIG.C_EXT_RST_WIDTH 1
+
+# ps7 spi connections
+
+ad_connect lcd_scl sys_ps7/SPI0_SCLK_O
+ad_connect lcd_sda sys_ps7/SPI0_MOSI_O
 
 # system reset/clock definitions
 
@@ -186,3 +194,63 @@ ad_connect sys_concat_intc/In3 GND
 ad_connect sys_concat_intc/In2 GND
 ad_connect sys_concat_intc/In1 GND
 ad_connect sys_concat_intc/In0 GND
+
+### hdmi
+
+ad_ip_instance hdmi hdmi_0
+ad_ip_instance hdmi_generator hdmi_generator_0
+
+ad_connect hdmi_0/tmds_0 hdmi_d0
+ad_connect hdmi_0/tmds_1 hdmi_d1
+ad_connect hdmi_0/tmds_2 hdmi_d2
+ad_connect hdmi_0/tmds_clock hdmi_clk
+
+ad_connect hdmi_generator_0/pixel_clk hdmi_0/clk_pixel
+ad_connect hdmi_generator_0/pixel_x5_clk hdmi_0/clk_pixel_x5
+ad_connect GND hdmi_0/clk_audio
+ad_connect hdmi_generator_0/pixel_reset hdmi_0/reset
+ad_connect hdmi_generator_0/rgb hdmi_0/rgb
+
+ad_connect hdmi_0/screen_width hdmi_generator_0/screen_width
+ad_connect hdmi_0/screen_height hdmi_generator_0/screen_height
+ad_connect hdmi_0/cx hdmi_generator_0/cx
+ad_connect hdmi_0/cy hdmi_generator_0/cy
+
+ad_connect sys_cpu_clk hdmi_generator_0/clk_100m
+ad_connect sys_cpu_reset hdmi_generator_0/reset_100m
+
+### DMA
+
+ad_ip_instance axi_dmac hdmi_source_dma
+ad_ip_parameter hdmi_source_dma CONFIG.DMA_TYPE_SRC 0
+ad_ip_parameter hdmi_source_dma CONFIG.DMA_TYPE_DEST 1
+ad_ip_parameter hdmi_source_dma CONFIG.CYCLIC 1
+ad_ip_parameter hdmi_source_dma CONFIG.SYNC_TRANSFER_START 1
+ad_ip_parameter hdmi_source_dma CONFIG.AXI_SLICE_SRC 0
+ad_ip_parameter hdmi_source_dma CONFIG.AXI_SLICE_DEST 0
+ad_ip_parameter hdmi_source_dma CONFIG.DMA_2D_TRANSFER 0
+ad_ip_parameter hdmi_source_dma CONFIG.DMA_DATA_WIDTH_DEST 64
+ad_ip_parameter hdmi_source_dma CONFIG.DMA_LENGTH_WIDTH 28
+
+ad_connect hdmi_generator_0/pixel_clk hdmi_source_dma/m_axis_aclk
+ad_connect hdmi_generator_0/s_axis_rgb hdmi_source_dma/m_axis
+
+### interconnects
+
+ad_cpu_interconnect 0x7c420000 hdmi_source_dma
+
+ad_ip_parameter sys_ps7 CONFIG.PCW_USE_S_AXI_HP0 {1}
+ad_connect sys_cpu_clk sys_ps7/S_AXI_HP0_ACLK
+ad_connect hdmi_source_dma/m_src_axi sys_ps7/S_AXI_HP0
+
+create_bd_addr_seg -range 0x20000000 -offset 0x00000000 \
+                    [get_bd_addr_spaces hdmi_source_dma/m_src_axi] \
+                    [get_bd_addr_segs sys_ps7/S_AXI_HP0/HP0_DDR_LOWOCM] \
+                    SEG_sys_ps7_HP0_DDR_LOWOCM
+
+ad_connect sys_cpu_clk hdmi_source_dma/m_src_axi_aclk
+ad_connect sys_cpu_resetn hdmi_source_dma/m_src_axi_aresetn
+
+### interrupts
+
+ad_cpu_interrupt ps-12 mb-12 hdmi_source_dma/irq

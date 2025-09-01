@@ -1,0 +1,5 @@
+`verilator_config
+lint_off -rule WIDTHEXPAND -file "*.v"
+lint_off -rule WIDTHTRUNC -file "*.v"
+lint_off -rule PINMISSING -file "*.v"
+lint_off -rule SELRANGE -file "*.v"

@@ -1,6 +1,6 @@
 /*
  * Synchronizes an active-high asynchronous reset signal to a given clock by
- * using a pipeline of N registers.
+ * using a pipeline of N registers and stretches with D synchronous registers.
  */
 module util_reset_sync #
 (
