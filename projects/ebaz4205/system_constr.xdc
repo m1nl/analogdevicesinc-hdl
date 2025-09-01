@@ -235,3 +235,11 @@ create_clock -name fpga_1_clk \
     [get_pins {i_system_wrapper/system_i/sys_ps7/inst/PS7_i/FCLKCLK[1]}]
 
 set_input_jitter fpga_1_clk 0.3
+
+# pixel_clk
+
+create_generated_clock -name pixel_clk \
+    [get_pins {i_system_wrapper/system_i/hdmi_generator_0/inst/mmcm_adv_inst/CLKOUT0}]
+
+create_generated_clock -name pixel_x5_clk \
+    [get_pins {i_system_wrapper/system_i/hdmi_generator_0/inst/mmcm_adv_inst/CLKOUT1}]
