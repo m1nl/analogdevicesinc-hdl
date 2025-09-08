@@ -211,6 +211,9 @@ ad_connect hdmi_0/tmds_1 hdmi_d1
 ad_connect hdmi_0/tmds_2 hdmi_d2
 ad_connect hdmi_0/tmds_clock hdmi_clk
 
+ad_connect sys_cpu_clk hdmi_generator_0/clk_100m
+ad_connect sys_cpu_reset hdmi_generator_0/reset_100m
+
 ad_connect hdmi_generator_0/pixel_reset hdmi_0/reset
 
 ad_connect hdmi_generator_0/pixel_clk hdmi_0/clk_pixel
@@ -223,9 +226,6 @@ ad_connect hdmi_0/screen_width hdmi_generator_0/screen_width
 ad_connect hdmi_0/screen_height hdmi_generator_0/screen_height
 ad_connect hdmi_generator_0/rgb hdmi_0/rgb
 
-ad_connect sys_cpu_clk hdmi_generator_0/clk_100m
-ad_connect sys_cpu_reset hdmi_generator_0/reset_100m
-
 ad_ip_instance xlconstant audio_sample_word_GND
 ad_ip_parameter audio_sample_word_GND CONFIG.CONST_VAL 0
 ad_ip_parameter audio_sample_word_GND CONFIG.CONST_WIDTH 16
@@ -235,35 +235,35 @@ ad_connect audio_sample_word_GND/dout hdmi_0/audio_sample_word_1
 
 ### dma
 
-ad_ip_instance axi_dmac hdmi_source_dma
-ad_ip_parameter hdmi_source_dma CONFIG.DMA_TYPE_SRC 0
-ad_ip_parameter hdmi_source_dma CONFIG.DMA_TYPE_DEST 1
-ad_ip_parameter hdmi_source_dma CONFIG.CYCLIC 1
-ad_ip_parameter hdmi_source_dma CONFIG.AXI_SLICE_SRC 0
-ad_ip_parameter hdmi_source_dma CONFIG.AXI_SLICE_DEST 0
-ad_ip_parameter hdmi_source_dma CONFIG.DMA_2D_TRANSFER 0
-ad_ip_parameter hdmi_source_dma CONFIG.DMA_DATA_WIDTH_DEST 64
-ad_ip_parameter hdmi_source_dma CONFIG.DMA_LENGTH_WIDTH 28
+ad_ip_instance axi_dmac hdmi_sink_dma
+ad_ip_parameter hdmi_sink_dma CONFIG.DMA_TYPE_SRC 0
+ad_ip_parameter hdmi_sink_dma CONFIG.DMA_TYPE_DEST 1
+ad_ip_parameter hdmi_sink_dma CONFIG.CYCLIC 1
+ad_ip_parameter hdmi_sink_dma CONFIG.AXI_SLICE_SRC 0
+ad_ip_parameter hdmi_sink_dma CONFIG.AXI_SLICE_DEST 0
+ad_ip_parameter hdmi_sink_dma CONFIG.DMA_2D_TRANSFER 0
+ad_ip_parameter hdmi_sink_dma CONFIG.DMA_DATA_WIDTH_DEST 64
 
-ad_connect hdmi_generator_0/pixel_clk hdmi_source_dma/m_axis_aclk
-ad_connect hdmi_generator_0/s_axis_rgb hdmi_source_dma/m_axis
+ad_connect hdmi_generator_0/pixel_clk hdmi_sink_dma/m_axis_aclk
+
+ad_connect sys_cpu_clk hdmi_sink_dma/m_src_axi_aclk
+ad_connect sys_cpu_resetn hdmi_sink_dma/m_src_axi_aresetn
+
+ad_connect hdmi_generator_0/s_axis_rgb hdmi_sink_dma/m_axis
 
 ### interconnects
 
-ad_cpu_interconnect 0x7c420000 hdmi_source_dma
+ad_cpu_interconnect 0x7c420000 hdmi_sink_dma
 
 ad_ip_parameter sys_ps7 CONFIG.PCW_USE_S_AXI_HP0 {1}
 ad_connect sys_cpu_clk sys_ps7/S_AXI_HP0_ACLK
-ad_connect hdmi_source_dma/m_src_axi sys_ps7/S_AXI_HP0
+ad_connect hdmi_sink_dma/m_src_axi sys_ps7/S_AXI_HP0
 
 create_bd_addr_seg -range 0x20000000 -offset 0x00000000 \
-                    [get_bd_addr_spaces hdmi_source_dma/m_src_axi] \
+                    [get_bd_addr_spaces hdmi_sink_dma/m_src_axi] \
                     [get_bd_addr_segs sys_ps7/S_AXI_HP0/HP0_DDR_LOWOCM] \
                     SEG_sys_ps7_HP0_DDR_LOWOCM
 
-ad_connect sys_cpu_clk hdmi_source_dma/m_src_axi_aclk
-ad_connect sys_cpu_resetn hdmi_source_dma/m_src_axi_aresetn
-
 ### interrupts
 
-ad_cpu_interrupt ps-12 mb-12 hdmi_source_dma/irq
+ad_cpu_interrupt ps-12 mb-12 hdmi_sink_dma/irq
