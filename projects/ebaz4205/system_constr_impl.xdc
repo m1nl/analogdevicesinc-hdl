@@ -1,3 +1,8 @@
+###############################################################################
+## Copyright (C) 2025 Mateusz Nalewajski. All rights reserved.
+### SPDX short identifier: ADIBSD
+###############################################################################
+
 # gmii input delay
 
 set_input_delay -clock [get_clocks GMII_rx_clk] -max 1.0 [get_ports {GMII_rxd* GMII_rx_dv}]

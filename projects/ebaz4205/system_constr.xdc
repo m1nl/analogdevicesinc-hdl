@@ -1,3 +1,12 @@
+###############################################################################
+## Copyright (C) 2014-2024 Analog Devices, Inc. All rights reserved.
+## Copyright (C) 2025 Mateusz Nalewajski. All rights reserved.
+### SPDX short identifier: ADIBSD
+###############################################################################
+
+## This file is based on "pluto" project from Analog Devices
+## reference HDL repository.
+
 ## ports
 
 # uart
