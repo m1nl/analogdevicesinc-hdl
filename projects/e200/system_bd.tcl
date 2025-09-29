@@ -265,13 +265,16 @@ ad_ip_parameter axi_ad9361_adc_dma CONFIG.SYNC_TRANSFER_START 0
 ad_ip_parameter axi_ad9361_adc_dma CONFIG.AXI_SLICE_SRC 0
 ad_ip_parameter axi_ad9361_adc_dma CONFIG.AXI_SLICE_DEST 0
 ad_ip_parameter axi_ad9361_adc_dma CONFIG.DMA_2D_TRANSFER 0
-ad_ip_parameter axi_ad9361_adc_dma CONFIG.DMA_DATA_WIDTH_SRC 64
+ad_ip_parameter axi_ad9361_adc_dma CONFIG.DMA_DATA_WIDTH_SRC 32
 ad_ip_parameter axi_ad9361_adc_dma CONFIG.SYNC_TRANSFER_START {true}
 
 ad_add_decimation_filter "rx_fir_decimator" 4 2 1 {61.44} {61.44} \
                          "$ad_hdl_dir/library/util_fir_int/coefile_int.coe"
 ad_ip_instance xlslice decim_slice
 ad_ip_instance util_cpack2 cpack
+ad_ip_parameter cpack CONFIG.SAMPLE_DATA_WIDTH 16
+ad_ip_parameter cpack CONFIG.SAMPLE_DATA_SHIFT 4
+ad_ip_parameter cpack CONFIG.SAMPLE_DATA_TRIM 4
 
 # connections
 
