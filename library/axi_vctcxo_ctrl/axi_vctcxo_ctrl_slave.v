@@ -180,7 +180,7 @@ module axi_vctcxo_ctrl_slave #(
   initial begin
     // default values from Linux ad5660_mp.c driver
     mem[REG_ADDR_MODE]          = 1;
-    mem[REG_ADDR_USER_VALUE]    = 2300;
+    mem[REG_ADDR_USER_VALUE]    = 23000;
     mem[REG_ADDR_CURRENT_VALUE] = 0;
     mem[REG_ADDR_REF_SEL]       = 0;
     mem[REG_ADDR_STATUS]        = 0;
