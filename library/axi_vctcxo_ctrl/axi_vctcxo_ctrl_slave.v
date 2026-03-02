@@ -101,7 +101,9 @@ module axi_vctcxo_ctrl_slave #(
 
   reg [AW-1:0] pre_raddr, raddr;
 
-  always @(posedge s_axi_aclk) if (s_axi_arready) pre_raddr <= s_axi_araddr;
+  always @(posedge s_axi_aclk)
+    if (s_axi_arready)
+      pre_raddr <= s_axi_araddr[AW+ADDR_LSB-1:ADDR_LSB];
 
   always @(*)
     if (!axi_arready) raddr = pre_raddr;
@@ -139,7 +141,9 @@ module axi_vctcxo_ctrl_slave #(
     else if (valid_write_address) axi_wready <= 1'b1;
     else axi_wready <= (axi_wready && !s_axi_wvalid);
 
-  always @(posedge s_axi_aclk) if (s_axi_awready) pre_waddr <= s_axi_awaddr[AW+ADDR_LSB-1:ADDR_LSB];
+  always @(posedge s_axi_aclk)
+    if (s_axi_awready)
+      pre_waddr <= s_axi_awaddr[AW+ADDR_LSB-1:ADDR_LSB];
 
   always @(posedge s_axi_aclk)
     if (s_axi_wready) begin
